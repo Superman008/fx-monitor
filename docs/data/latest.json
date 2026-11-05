@@ -1,0 +1,6 @@
+{
+ "collected_at": "2026-11-05T15:40:00+11:00",
+ "seed": true,
+ "boc": {"ok": true, "error": null, "last_success": "2026-11-05T15:40:00+11:00", "usd": 671.8, "aud": 466.66, "published_at": "2026/11/05 00:14:26", "published_tz": "北京时间"},
+ "moneychain": {"ok": true, "error": null, "last_success": "2026-11-05T15:40:00+11:00", "quoted_at": "11-05 15:31 悉尼时间", "aud_vip_buy": 4.6536, "aud_vip_sell": 4.7986, "usd_buy": 6.6383, "usd_sell": 6.8719, "usd_is_vip": false}
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>汇率看板 · 中行 / Moneychain</title>
+<style>
+:root{--bg:#eef2f1;--panel:#fff;--ink:#10222b;--mute:#5d7078;--line:#d5dedc;--teal:#0b5c5a;--brass:#a9741a;--bad:#b3261e;--badbg:#fdecea}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.meta{color:var(--mute);font-size:.9rem;margin:0 0 16px}
+.banner{background:var(--badbg);color:var(--bad);border-left:4px solid var(--bad);padding:10px 14px;margin:0 0 12px;font-size:.92rem}
+.note{background:#fff7e6;color:#7a5200;border-left:4px solid var(--brass);padding:10px 14px;margin:0 0 12px;font-size:.92rem}
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.boards{grid-template-columns:1fr}}
+section.board{background:var(--panel);border-top:4px solid var(--teal);padding:18px 20px}
+section.board.mc{border-top-color:var(--brass)}
+h2{font-size:1.05rem;margin:0}
+.src{color:var(--mute);font-size:.85rem;margin:2px 0 14px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row .lab{font-weight:600}
+.row .sub{display:block;color:var(--mute);font-size:.82rem;font-weight:400}
+.num{font-size:2rem;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;text-align:right}
+.num small{display:block;font-size:.8rem;font-weight:400;color:var(--mute);letter-spacing:0}
+.tag{display:inline-block;font-size:.75rem;padding:1px 8px;border:1px solid currentColor;margin-left:6px;vertical-align:middle}
+.tag.vip{color:var(--brass)}.tag.novip{color:var(--mute)}
+.stale .num{color:var(--mute)}
+details{margin-top:20px;background:var(--panel);padding:12px 20px}
+summary{cursor:pointer;font-weight:600}
+summary:focus-visible{outline:2px solid var(--teal)}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums;margin-top:10px}
+th,td{text-align:right;padding:6px 8px;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+footer{margin-top:20px;color:var(--mute);font-size:.82rem}
+</style>
+</head>
+<body>
+<main>
+<h1>汇率看板</h1>
+<p class="meta" id="meta">加载中…</p>
+<div id="alerts"></div>
+<div class="boards" id="boards"></div>
+<details><summary>最近 24 次记录</summary><div class="wrap" id="hist"></div></details>
+<footer>中行数据来源：中国银行外汇牌价（仅供参考，实际交易以中行及 Moneychain 当时报价为准）。Moneychain 数据来源：融侨速汇公开汇率页。仅在周一至周五墨尔本时间 9:00–17:59 每小时更新。</footer>
+</main>
+<script>
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f=(v,d)=>v==null?'—':Number(v).toFixed(d);
+const mel=iso=>new Date(iso).toLocaleString('zh-CN',{timeZone:'Australia/Melbourne',hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const get=u=>fetch(u+'?t='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+function inWindow(){const p=new Intl.DateTimeFormat('en-AU',{timeZone:'Australia/Melbourne',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date());
+  const d=p.find(x=>x.type==='weekday').value,h=+p.find(x=>x.type==='hour').value;return !['Sat','Sun'].includes(d)&&h>=10&&h<=17}
+function row(lab,sub,val,small,tag){return `<div class="row"><div class="lab">${esc(lab)}${tag||''}<span class="sub">${esc(sub)}</span></div><div class="num">${val}<small>${esc(small||'')}</small></div></div>`}
+(async()=>{
+  let L,H=[];
+  try{L=await get('data/latest.json')}catch(e){document.getElementById('meta').textContent='数据文件读取失败，请稍后刷新。';return}
+  try{H=await get('data/history.json')}catch(e){}
+  const b=L.boc||{},m=L.moneychain||{},al=[];
+  const age=(Date.now()-new Date(L.collected_at))/36e5;
+  document.getElementById('meta').textContent=`最近一次采集：${mel(L.collected_at)}（墨尔本时间），距今 ${age<1?Math.round(age*60)+' 分钟':age.toFixed(1)+' 小时'}`;
+  if(L.seed)al.push(['note','当前为手工录入的初始数据，首次自动采集成功后会被替换。']);
+  if(inWindow()&&age>3)al.push(['banner','数据已超过 3 小时未更新，自动采集可能出错，请勿作为报价依据。']);
+  if(b.ok===false)al.push(['banner','中行数据本次采集失败，显示的是上次成功数据（'+esc(b.last_success?mel(b.last_success):'无')+'）。原因：'+esc(b.error)]);
+  if(m.ok===false)al.push(['banner','Moneychain 数据本次采集失败，显示的是上次成功数据（'+esc(m.last_success?mel(m.last_success):'无')+'）。原因：'+esc(m.error)]);
+  document.getElementById('alerts').innerHTML=al.map(a=>`<div class="${a[0]}">${a[1]}</div>`).join('');
+  const per1=v=>v==null?'':`≈ ${(v/100).toFixed(4)} 人民币/1外币`;
+  const vip='<span class="tag vip">VIP</span>',nov='<span class="tag novip">非VIP</span>';
+  document.getElementById('boards').innerHTML=
+   `<section class="board ${b.ok===false?'stale':''}"><h2>中国银行 · 中行折算价</h2><p class="src">中行发布：${esc(b.published_at||'—')}（${esc(b.published_tz||'北京时间')}）</p>`+
+    row('美元 USD','人民币 / 100 美元',f(b.usd,2),per1(b.usd))+row('澳元 AUD','人民币 / 100 澳元',f(b.aud,2),per1(b.aud))+`</section>`+
+   `<section class="board mc ${m.ok===false?'stale':''}"><h2>Moneychain · 现汇卖出价</h2><p class="src">页面报价时间：${esc(m.quoted_at||'—')}</p>`+
+    row('澳元 → 人民币','现汇卖出价',f(m.aud_vip_sell,4),'买入 '+f(m.aud_vip_buy,4),vip)+
+    row('美金 → 人民币','现汇卖出价',f(m.usd_sell,4),'买入 '+f(m.usd_buy,4),m.usd_is_vip?vip:nov)+`</section>`;
+  const rows=H.slice(-24).reverse().map(r=>`<tr><td>${esc(mel(r.t))}</td><td>${f(r.boc_usd,2)}</td><td>${f(r.boc_aud,2)}</td><td>${f(r.mc_aud_vip_sell,4)}</td><td>${f(r.mc_usd_sell,4)}</td></tr>`).join('');
+  document.getElementById('hist').innerHTML=rows?`<table><tr><th>采集时间（墨尔本）</th><th>中行 USD</th><th>中行 AUD</th><th>MC 澳元VIP卖出</th><th>MC 美金卖出</th></tr>${rows}</table>`:'<p class="src">还没有自动采集记录。</p>';
+})();
+</script>
+</body>
+</html>

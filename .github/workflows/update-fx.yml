@@ -1,0 +1,38 @@
+name: update-fx
+on:
+  schedule:
+    - cron: "7 * * * *"   # every hour (UTC); scrape.py itself checks Melbourne time
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Run even outside Mon-Fri 09:00-17:59 Melbourne time"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: fx
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: gate
+        run: python scrape.py --gate "${{ inputs.force }}"
+      - if: steps.gate.outputs.run == 'true'
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+      - if: steps.gate.outputs.run == 'true'
+        run: python scrape.py
+      - if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "fx-bot"
+          git config user.email "fx-bot@users.noreply.github.com"
+          git add -A docs debug
+          git diff --cached --quiet || (git commit -m "rates $(date -u +%FT%TZ)" && git pull --rebase && git push)
