@@ -52,7 +52,7 @@ const f=(v,d)=>v==null?'—':Number(v).toFixed(d);
 const mel=iso=>new Date(iso).toLocaleString('zh-CN',{timeZone:'Australia/Melbourne',hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 const get=u=>fetch(u+'?t='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
 function inWindow(){const p=new Intl.DateTimeFormat('en-AU',{timeZone:'Australia/Melbourne',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date());
-  const d=p.find(x=>x.type==='weekday').value,h=+p.find(x=>x.type==='hour').value;return !['Sat','Sun'].includes(d)&&h>=10&&h<=17}
+  const d=p.find(x=>x.type==='weekday').value,h=+p.find(x=>x.type==='hour').value;return !['Sat','Sun'].includes(d)&&h>=9&&h<=17}
 function row(lab,sub,val,small,tag){return `<div class="row"><div class="lab">${esc(lab)}${tag||''}<span class="sub">${esc(sub)}</span></div><div class="num">${val}<small>${esc(small||'')}</small></div></div>`}
 (async()=>{
   let L,H=[];
