@@ -91,7 +91,7 @@ def fetch_moneychain():
         browser = p.chromium.launch()
         page = browser.new_context(locale="zh-CN", timezone_id="Australia/Melbourne",
                                    user_agent=UA, viewport={"width": 1400, "height": 1000}).new_page()
-        page.goto(MC_URL, wait_until="networkidle", timeout=60000)
+        page.goto(MC_URL, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_function(r"/美金\s*→\s*人民币/.test(document.body.innerText) && /\d\.\d{4}/.test(document.body.innerText)", timeout=30000)
         page.wait_for_timeout(1500)
         html = page.content()
