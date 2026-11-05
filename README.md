@@ -1,4 +1,13 @@
-# 汇率看板部署步骤（约 15 分钟）
+# fx-monitor 汇率看板
+
+线上地址：https://superman008.github.io/fx-monitor/
+仓库：https://github.com/Superman008/fx-monitor
+
+- 采集口径：中行折算价（人民币/100 美元、人民币/100 澳元）；Moneychain「澳元 → 人民币」VIP 行现汇卖出价、「美金 → 人民币」现汇卖出价。
+- 更新频率：周一至周五墨尔本时间 09:00–17:59，每小时第 7 分钟由 GitHub Actions 自动采集（cron `7 * * * *`，脚本内按墨尔本时间二次判定）。
+- 采集失败时页面顶部会显示红色告警并保留上次成功数据；Moneychain 若认不出 VIP 行会拒绝发布，并把页面快照写到 `debug/`。
+
+## 首次部署步骤（已执行，留档备查，约 15 分钟）
 
 1. 注册/登录 github.com，新建仓库，名字例如 `fx-monitor`（Pages 免费版要求仓库为 Public）。
 2. 把本文件夹里的所有内容上传到仓库，注意要包含隐藏文件夹 `.github`（建议用 GitHub Desktop，或网页上直接拖拽整个文件夹）。
