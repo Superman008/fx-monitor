@@ -1,0 +1,66 @@
+{
+ "rows": [
+  {
+   "label": "美金 → 人民币",
+   "buy": 0.891,
+   "sell": 2.7989,
+   "overlap": 0
+  },
+  {
+   "label": "澳元 → 人民币",
+   "buy": 0.891,
+   "sell": 2.7989,
+   "overlap": 0
+  },
+  {
+   "label": "美金 → 人民币",
+   "buy": 0.891,
+   "sell": 2.7989,
+   "overlap": 0
+  },
+  {
+   "label": "澳元 → 人民币",
+   "buy": 0.891,
+   "sell": 2.7989,
+   "overlap": 0
+  },
+  {
+   "label": "美金 → 人民币",
+   "buy": 6.6381,
+   "sell": 6.8717,
+   "overlap": 0
+  },
+  {
+   "label": "美金 → 人民币",
+   "buy": 6.6381,
+   "sell": 6.8717,
+   "overlap": 0
+  },
+  {
+   "label": "美金 → 人民币",
+   "buy": 6.6381,
+   "sell": 6.8717,
+   "overlap": 0
+  },
+  {
+   "label": "澳元 → 人民币",
+   "buy": 4.6244,
+   "sell": 4.8044,
+   "overlap": 0
+  },
+  {
+   "label": "澳元 → 人民币",
+   "buy": 4.6244,
+   "sell": 4.8044,
+   "overlap": 0
+  },
+  {
+   "label": "澳元 → 人民币",
+   "buy": 4.6244,
+   "sell": 4.8044,
+   "overlap": 0
+  }
+ ],
+ "vip_tag_found": true,
+ "quoted_at": "11-05 16:22 悉尼时间"
+}
