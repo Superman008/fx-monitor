@@ -57,31 +57,32 @@ def fetch_boc():
     raise last
 
 
-JS_ROWS = r"""
-() => {
-  const re = /^(澳元|美金)\s*→\s*人民币$/;
-  const vip = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /VIP/.test(e.textContent) && e.textContent.trim().length < 12);
-  const vr = vip ? vip.getBoundingClientRect() : null;
-  const rows = [];
-  for (const el of document.querySelectorAll('*')) {
-    if (el.children.length > 2 || !re.test(el.textContent.trim())) continue;
-    let row = el;
-    while (row && !((row.textContent.match(/\d[\d,]*\.\d{2,}/g) || []).length >= 2)) row = row.parentElement;
-    if (!row) continue;
-    const nums = row.textContent.match(/\d[\d,]*\.\d{2,}/g).slice(0, 2).map(s => parseFloat(s.replace(/,/g, '')));
-    const rr = row.getBoundingClientRect();
-    let overlap = 0;
-    if (vr) {
-      const w = Math.min(rr.right, vr.right) - Math.max(rr.left, vr.left);
-      const h = Math.min(rr.bottom, vr.bottom) - Math.max(rr.top, vr.top);
-      overlap = w > 0 && h > 0 ? w * h : 0;
-    }
-    rows.push({label: el.textContent.trim(), buy: nums[0], sell: nums[1], overlap});
-  }
-  const m = document.body.innerText.match(/(\d{2}-\d{2}),?\s*(\d{2}:\d{2})(?::\d{2})?\s*[（(]([^）)]*)[）)]/);
-  return {rows, vip_tag_found: !!vip, quoted_at: m ? `${m[1]} ${m[2]} ${m[3]}` : null};
-}
-"""
+NUM_RE = re.compile(r"[0-9]+(?:\.[0-9]+)?")
+
+
+def parse_moneychain_html(html):
+    """Return rows parsed from the <tr> table: label text, VIP flag, cell numbers."""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    rows = []
+    for tr in soup.select("tr"):
+        cells = tr.find_all("td")
+        if len(cells) < 3:  # current 现汇买入价 / 现汇卖出价 columns
+            continue
+        label = " ".join(cells[0].get_text(" ", strip=True).split())
+        nums = []
+        for c in cells[1:]:
+            t = c.get_text(" ", strip=True).replace(",", "")
+            if NUM_RE.fullmatch(t):
+                nums.append(float(t))
+        if len(nums) < 2:
+            continue
+        rows.append({"label": label,
+                     "vip": bool(tr.select(".vip_huilv")) or "VIP汇率" in label,
+                     "buy": nums[0], "sell": nums[1]})
+    text = soup.get_text(" ", strip=True)
+    m = re.search(r"(\d{2}-\d{2}),?\s*(\d{2}:\d{2})(?::\d{2})?\s*[（(]([^）)]*)[）)]", text)
+    return {"rows": rows, "quoted_at": f"{m.group(1)} {m.group(2)} {m.group(3)}" if m else None}
 
 
 def fetch_moneychain():
@@ -93,21 +94,23 @@ def fetch_moneychain():
         page.goto(MC_URL, wait_until="networkidle", timeout=60000)
         page.wait_for_function(r"/美金\s*→\s*人民币/.test(document.body.innerText) && /\d\.\d{4}/.test(document.body.innerText)", timeout=30000)
         page.wait_for_timeout(1500)
-        res = page.evaluate(JS_ROWS)
         html = page.content()
         browser.close()
 
-    def pick(label):
-        rows = [r for r in res["rows"] if r["label"].replace(" ", "").startswith(label)]
-        rows = list({(r["buy"], r["sell"]): r for r in rows}.values())  # drop duplicates
-        if not rows:
-            raise ValueError(f"Moneychain: row {label}→人民币 not found")
-        vip_rows = [r for r in rows if r["overlap"] > 0]
-        if vip_rows:
-            return max(vip_rows, key=lambda r: r["overlap"]), True
-        return rows[0], False
+    res = parse_moneychain_html(html)
 
-    aud, aud_vip = pick("澳元")
+    def pick(label, must_vip=False):
+        rows = [r for r in res["rows"]
+                if r["label"].replace(" ", "").startswith(label) and "人民币" in r["label"]]
+        if must_vip:
+            rows = [r for r in rows if r["vip"]]
+        else:
+            rows = [r for r in rows if r["vip"]] or rows
+        if not rows:
+            raise ValueError(f"Moneychain: row {label}→人民币 not found (must_vip={must_vip})")
+        return max(rows, key=lambda r: r["sell"]), rows[0]["vip"]
+
+    aud, aud_vip = pick("澳元", must_vip=True)
     usd, usd_vip = pick("美金")
     for r in (aud, usd):
         if not (r["buy"] and r["sell"] and r["sell"] > r["buy"]):
