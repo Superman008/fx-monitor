@@ -1,24 +1,24 @@
 {
- "collected_at": "2026-11-11T10:13:27+11:00",
+ "collected_at": "2026-11-11T17:00:22+11:00",
  "seed": false,
  "boc": {
-  "usd": 671.67,
-  "aud": 462.77,
-  "published_at": "2026/11/11 06:40:19",
+  "usd": 671.91,
+  "aud": 460.54,
+  "published_at": "2026/11/11 14:00:03",
   "published_tz": "北京时间",
   "ok": true,
   "error": null,
-  "last_success": "2026-11-11T10:13:27+11:00"
+  "last_success": "2026-11-11T17:00:22+11:00"
  },
  "moneychain": {
-  "quoted_at": "11-11 10:13 悉尼时间",
-  "aud_vip_buy": 4.5871,
-  "aud_vip_sell": 4.7107,
-  "usd_buy": 6.6392,
-  "usd_sell": 6.8728,
+  "quoted_at": "11-11 17:00 悉尼时间",
+  "aud_vip_buy": 4.5962,
+  "aud_vip_sell": 4.7198,
+  "usd_buy": 6.6438,
+  "usd_sell": 6.8774,
   "usd_is_vip": false,
   "ok": true,
   "error": null,
-  "last_success": "2026-11-11T10:13:27+11:00"
+  "last_success": "2026-11-11T17:00:22+11:00"
  }
 }
